@@ -1,0 +1,154 @@
+{
+  "name": "azure_web_app_performance_downtime_or_slowness_due_to_high_traffic",
+  "description": "This incident type refers to situations where an Azure web app experiences slow performance or downtime due to increased traffic. When the traffic to a web app increases, it can overload the server, causing it to respond slowly or even crash. This can lead to downtime, which can affect the user experience and impact the business. To resolve this issue, the web app can be scaled vertically (scale up/down) or horizontally (scale out/in) based on traffic patterns. Auto-scaling rules can also be configured to handle traffic fluctuations automatically.",
+  "params": [
+    {
+      "name": "MIN_INSTANCES",
+      "value": ""
+    },
+    {
+      "name": "AUTOSCALE_SETTING_NAME",
+      "value": ""
+    },
+    {
+      "name": "WEB_APP_NAME",
+      "value": ""
+    },
+    {
+      "name": "NEW_INSTANCE_SKU",
+      "value": ""
+    },
+    {
+      "name": "APP_SERVICE_PLAN_NAME",
+      "value": ""
+    },
+    {
+      "name": "APP_SERVICE_PLAN_ID",
+      "value": ""
+    },
+    {
+      "name": "RESOURCE_GROUP_NAME",
+      "value": ""
+    },
+    {
+      "name": "MAX_INSTANCES",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Azure Web App Performance Downtime or Slowness due to High Traffic\nThis incident type refers to situations where an Azure web app experiences slow performance or downtime due to increased traffic. When the traffic to a web app increases, it can overload the server, causing it to respond slowly or even crash. This can lead to downtime, which can affect the user experience and impact the business. To resolve this issue, the web app can be scaled vertically (scale up/down) or horizontally (scale out/in) based on traffic patterns. Auto-scaling rules can also be configured to handle traffic fluctuations automatically."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current status of the web app:"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `az webapp show --name ${WEB_APP_NAME} --resource-group ${RESOURCE_GROUP_NAME} --query \"state\"`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the logs of the web app to identify any errors or performance issues:"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `az webapp log tail --name ${WEB_APP_NAME} --resource-group ${RESOURCE_GROUP_NAME}`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current resource usage of the web app:"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `az monitor metrics list --resource ${APP_SERVICE_PLAN_ID} --metric \"CpuPercentage\" \"MemoryPercentage\" --interval PT1H`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current number of instances of the web app:"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `az appservice plan show --name ${APP_SERVICE_PLAN_NAME} --resource-group ${RESOURCE_GROUP_NAME} --query \"sku.capacity\"`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current auto-scaling rules of the web app:"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `az monitor autoscale show --name ${AUTOSCALE_SETTING_NAME} --resource-group ${RESOURCE_GROUP_NAME}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Scale the web app vertically (scale up/down) to increase its capacity. This involves adding more resources such as RAM, CPU, and storage to the server."
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_appservice_plan($NEW_INSTANCE_SKU, $APP_SERVICE_PLAN_NAME, $RESOURCE_GROUP_NAME)"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Scale the web app horizontally"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_scale_webapp($APP_SERVICE_PLAN_NAME, $RESOURCE_GROUP_NAME, $MAX_INSTANCES)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Configure auto-scaling rules to handle traffic fluctuations automatically. This ensures that the web app can handle increased traffic without manually scaling up or down."
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_autoscale_config_script($MIN_INSTANCES, $AUTOSCALE_SETTING_NAME, $APP_SERVICE_PLAN_ID, $MAX_INSTANCES)"
+    }
+  ]
+}
